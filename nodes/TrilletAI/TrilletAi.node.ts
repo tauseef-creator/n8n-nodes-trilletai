@@ -102,16 +102,42 @@ export class TrilletAi implements INodeType {
 			{
 				displayName: 'Dynamic Variables',
 				name: 'dynamic_variables',
-				type: 'json',
+				type: 'fixedCollection',
+				default: {},
+				typeOptions: {
+					multipleValues: true,
+				},
+				options: [
+					{
+						name: 'variables',
+						displayName: 'Variable',
+						values: [
+							{
+								displayName: 'Name',
+								name: 'name',
+								type: 'string',
+								default: '',
+								placeholder: 'user_name',
+								description: 'Variable name',
+							},
+							{
+								displayName: 'Value',
+								name: 'value',
+								type: 'string',
+								default: '',
+								placeholder: 'ibraheem',
+								description: 'Variable value',
+							},
+						],
+					},
+				],
 				displayOptions: {
 					show: {
 						operation: ['outbound'],
 						resource: ['call'],
 					},
 				},
-				default: '',
-				placeholder: '[{"name": "key", "value": "value"}]',
-				description: 'Array of {name, value} objects as JSON (optional)',
+				description: 'Add dynamic variables as key-value pairs (optional)',
 			},
 			{
 				displayName: 'Metadata',
@@ -143,23 +169,24 @@ export class TrilletAi implements INodeType {
 				const to = this.getNodeParameter('to', i) as string;
 				const callAgentId = this.getNodeParameter('call_agent_id', i) as string;
 				const callbackUrl = this.getNodeParameter('callback_url', i, '') as string;
-				const dynamicVariablesRaw = (this.getNodeParameter('dynamic_variables', i, '') as string).trim();
+				const dynamicVariablesInput = this.getNodeParameter('dynamic_variables.variables', i, []) as Array<{ name: string; value: string }>;
 				const metadataRaw = (this.getNodeParameter('metadata', i, '') as string).trim();
 
-				// Parse and validate dynamic_variables
-				let dynamicVariables;
-				if (!dynamicVariablesRaw || dynamicVariablesRaw === '[]') {
-					dynamicVariables = undefined;
-				} else {
-					try {
-						dynamicVariables = JSON.parse(dynamicVariablesRaw);
-						if (!Array.isArray(dynamicVariables) || dynamicVariables.length === 0) {
-							dynamicVariables = undefined;
-						}
-					} catch {
-						dynamicVariables = undefined;
-					}
-				}
+				// Get dynamic variables as array of { name, value }
+
+let dynamicVariables: IDataObject | undefined;
+
+if (Array.isArray(dynamicVariablesInput) && dynamicVariablesInput.length > 0) {
+	const hasValidPair = dynamicVariablesInput.some(item => item.name && item.name.trim() !== '');
+	if (hasValidPair) {
+		dynamicVariables = {};
+		dynamicVariablesInput.forEach(item => {
+			if (item.name && item.name.trim() !== '') {
+				dynamicVariables![item.name.trim()] = item.value ?? '';
+			}
+		});
+	}
+}
 
 				// Parse and validate metadata
 				let metadata;
