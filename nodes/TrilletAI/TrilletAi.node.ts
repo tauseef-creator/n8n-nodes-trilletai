@@ -14,12 +14,12 @@ export class TrilletAi implements INodeType {
 		icon: { light: 'file:../../icons/trilletAI.svg', dark: 'file:../../icons/trilletAI.dark.svg' },
 		group: ['input'],
 		version: 1,
-        subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
+		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
 		description: 'Make outbound calls with TrilletAI',
 		defaults: {
 			name: 'TrilletAI',
 		},
-        usableAsTool: true,
+		usableAsTool: true,
 		inputs: ['main'],
 		outputs: ['main'],
 		credentials: [
@@ -109,8 +109,9 @@ export class TrilletAi implements INodeType {
 						resource: ['call'],
 					},
 				},
-				default: '[{"name": "key", "value": "value"}]',
-				description: 'Array of {name, value} objects as JSON',
+				default: '',
+				placeholder: '[{"name": "key", "value": "value"}]',
+				description: 'Array of {name, value} objects as JSON (optional)',
 			},
 			{
 				displayName: 'Metadata',
@@ -122,13 +123,14 @@ export class TrilletAi implements INodeType {
 						resource: ['call'],
 					},
 				},
-				default: '{}',
-				description: 'Optional metadata as JSON',
+				default: '',
+				placeholder: '{"key": "value"}',
+				description: 'Optional metadata as JSON object',
 			},
 		],
 	};
 
-		async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
+	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
 		const returnData: INodeExecutionData[] = [];
 
@@ -140,34 +142,39 @@ export class TrilletAi implements INodeType {
 				// Extract parameters
 				const to = this.getNodeParameter('to', i) as string;
 				const callAgentId = this.getNodeParameter('call_agent_id', i) as string;
-				const callbackUrl = this.getNodeParameter('callback_url', i) as string;
-				const dynamicVariablesRaw = this.getNodeParameter('dynamic_variables', i, '[]') as string;
-				const metadataRaw = this.getNodeParameter('metadata', i, '{}') as string;
+				const callbackUrl = this.getNodeParameter('callback_url', i, '') as string;
+				const dynamicVariablesRaw = (this.getNodeParameter('dynamic_variables', i, '') as string).trim();
+				const metadataRaw = (this.getNodeParameter('metadata', i, '') as string).trim();
 
 				// Parse and validate dynamic_variables
 				let dynamicVariables;
-				try {
-					dynamicVariables = JSON.parse(dynamicVariablesRaw);
-					// Ensure it's an array and not empty
-					if (!Array.isArray(dynamicVariables) || dynamicVariables.length === 0) {
+				if (!dynamicVariablesRaw || dynamicVariablesRaw === '[]') {
+					dynamicVariables = undefined;
+				} else {
+					try {
+						dynamicVariables = JSON.parse(dynamicVariablesRaw);
+						if (!Array.isArray(dynamicVariables) || dynamicVariables.length === 0) {
+							dynamicVariables = undefined;
+						}
+					} catch {
 						dynamicVariables = undefined;
 					}
-				} catch {
-					dynamicVariables = undefined;
 				}
 
 				// Parse and validate metadata
 				let metadata;
-				try {
-					metadata = JSON.parse(metadataRaw);
-					// Ensure it's an object and not empty
-					if (typeof metadata !== 'object' || metadata === null || Array.isArray(metadata) || Object.keys(metadata).length === 0) {
+				if (!metadataRaw || metadataRaw === '{}') {
+					metadata = undefined;
+				} else {
+					try {
+						metadata = JSON.parse(metadataRaw);
+						if (typeof metadata !== 'object' || metadata === null || Array.isArray(metadata) || Object.keys(metadata).length === 0) {
+							metadata = undefined;
+						}
+					} catch {
 						metadata = undefined;
 					}
-				} catch {
-					metadata = undefined;
 				}
-
 				// Build body (only include fields with valid values)
 				const body: IDataObject = {
 					to,
