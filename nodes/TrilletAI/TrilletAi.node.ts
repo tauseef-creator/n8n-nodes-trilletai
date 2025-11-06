@@ -7,7 +7,7 @@ import type {
 	IHttpRequestOptions,
 } from 'n8n-workflow';
 
-export class TrilletAI implements INodeType {
+export class TrilletAi implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'TrilletAI',
 		name: 'trilletAi',
@@ -141,16 +141,40 @@ export class TrilletAI implements INodeType {
 				const to = this.getNodeParameter('to', i) as string;
 				const callAgentId = this.getNodeParameter('call_agent_id', i) as string;
 				const callbackUrl = this.getNodeParameter('callback_url', i) as string;
-				const dynamicVariables = JSON.parse(this.getNodeParameter('dynamic_variables', i, '[]') as string);
-				const metadata = this.getNodeParameter('metadata', i, {}) as IDataObject;
+				const dynamicVariablesRaw = this.getNodeParameter('dynamic_variables', i, '[]') as string;
+				const metadataRaw = this.getNodeParameter('metadata', i, '{}') as string;
 
-				// Build body (similar to your Make body)
+				// Parse and validate dynamic_variables
+				let dynamicVariables;
+				try {
+					dynamicVariables = JSON.parse(dynamicVariablesRaw);
+					// Ensure it's an array and not empty
+					if (!Array.isArray(dynamicVariables) || dynamicVariables.length === 0) {
+						dynamicVariables = undefined;
+					}
+				} catch {
+					dynamicVariables = undefined;
+				}
+
+				// Parse and validate metadata
+				let metadata;
+				try {
+					metadata = JSON.parse(metadataRaw);
+					// Ensure it's an object and not empty
+					if (typeof metadata !== 'object' || metadata === null || Array.isArray(metadata) || Object.keys(metadata).length === 0) {
+						metadata = undefined;
+					}
+				} catch {
+					metadata = undefined;
+				}
+
+				// Build body (only include fields with valid values)
 				const body: IDataObject = {
 					to,
 					call_agent_id: callAgentId,
 					...(callbackUrl && { callback_url: callbackUrl }),  // Only include if not empty
-					dynamic_variables: dynamicVariables,
-					metadata,
+					...(dynamicVariables && { dynamic_variables: dynamicVariables }),  // Only include if valid and not empty
+					...(metadata && { metadata }),  // Only include if valid and not empty
 				};
 
 				// Make authenticated POST request
