@@ -1,12 +1,10 @@
-import {
+import type {
 	IDataObject,
 	INodeExecutionData,
-    IExecuteFunctions,
+	IExecuteFunctions,
 	INodeType,
 	INodeTypeDescription,
-	INodePropertyOptions,
-	NodePropertyTypes,
-    IHttpRequestMethods
+	IHttpRequestOptions,
 } from 'n8n-workflow';
 
 export class TrilletAI implements INodeType {
@@ -38,8 +36,8 @@ export class TrilletAI implements INodeType {
 				type: 'options',
 				options: [
 					{ name: 'Call', value: 'call' },
-				] as INodePropertyOptions[],
-				default: '',
+				],
+				default: 'call',
 				noDataExpression: true,
 				required: true,
 			},
@@ -54,15 +52,15 @@ export class TrilletAI implements INodeType {
 				},
 				options: [
 					{ name: 'Outbound Call', value: 'outbound', action: 'Make an outbound call' },
-				] as INodePropertyOptions[],
-				default: '',
+				],
+				default: 'outbound',
 				noDataExpression: true,
 			},
 			// Parameters (mirroring your Make mappable params)
 			{
 				displayName: 'To (Phone Number)',
 				name: 'to',
-				type: 'string' as NodePropertyTypes,
+				type: 'string',
 				required: true,
 				displayOptions: {
 					show: {
@@ -77,7 +75,7 @@ export class TrilletAI implements INodeType {
 			{
 				displayName: 'Call Agent ID',
 				name: 'call_agent_id',
-				type: 'string' as NodePropertyTypes,
+				type: 'string',
 				required: true,
 				displayOptions: {
 					show: {
@@ -91,7 +89,7 @@ export class TrilletAI implements INodeType {
 			{
 				displayName: 'Callback URL',
 				name: 'callback_url',
-				type: 'string' as NodePropertyTypes,
+				type: 'string',
 				displayOptions: {
 					show: {
 						operation: ['outbound'],
@@ -104,7 +102,7 @@ export class TrilletAI implements INodeType {
 			{
 				displayName: 'Dynamic Variables',
 				name: 'dynamic_variables',
-				type: 'json' as NodePropertyTypes,
+				type: 'json',
 				displayOptions: {
 					show: {
 						operation: ['outbound'],
@@ -117,7 +115,7 @@ export class TrilletAI implements INodeType {
 			{
 				displayName: 'Metadata',
 				name: 'metadata',
-				type: 'json' as NodePropertyTypes,
+				type: 'json',
 				displayOptions: {
 					show: {
 						operation: ['outbound'],
@@ -135,8 +133,8 @@ export class TrilletAI implements INodeType {
 		const returnData: INodeExecutionData[] = [];
 
 		for (let i = 0; i < items.length; i++) {
-			const resource = this.getNodeParameter('resource', i) as string;
-			const operation = this.getNodeParameter('operation', i) as string;
+			const resource = this.getNodeParameter('resource', i);
+			const operation = this.getNodeParameter('operation', i);
 
 			if (resource === 'call' && operation === 'outbound') {
 				// Extract parameters
@@ -150,18 +148,15 @@ export class TrilletAI implements INodeType {
 				const body: IDataObject = {
 					to,
 					call_agent_id: callAgentId,
-					callback_url: callbackUrl || undefined,  // Omit if empty
+					...(callbackUrl && { callback_url: callbackUrl }),  // Only include if not empty
 					dynamic_variables: dynamicVariables,
 					metadata,
 				};
 
 				// Make authenticated POST request
-				const options = {
-					method: 'POST' as IHttpRequestMethods,
+				const options: IHttpRequestOptions = {
+					method: 'POST',
 					body,
-					headers: {
-						'Content-Type': 'application/json',
-					},
 					url: 'https://api-trillet.verlatai.com/v1/api/call',
 					json: true,
 				};
@@ -170,7 +165,7 @@ export class TrilletAI implements INodeType {
 					this,
 					'trilletApi',
 					options,
-				);
+				) as IDataObject;
 
 				// Map response to outputs (matching your Make response)
 				const newItem: INodeExecutionData = {
