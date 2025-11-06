@@ -1,19 +1,19 @@
 {
-	"name": "n8n-nodes-<...>",
+	"name": "n8n-nodes-trilletai",
 	"version": "0.1.0",
-	"description": "",
+	"description": "n8n nodes for Trillet AI Outbound Call",
 	"license": "MIT",
 	"homepage": "",
 	"keywords": [
 		"n8n-community-node-package"
 	],
 	"author": {
-		"name": "",
-		"email": ""
+		"name": "Trillet AI",
+		"email": "info@trillet.ai"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/<...>/n8n-nodes-<...>.git"
+		"url": "https://https://github.com/tauseef-creator/n8n-nodes-trilletai.git"
 	},
 	"scripts": {
 		"build": "n8n-node build",

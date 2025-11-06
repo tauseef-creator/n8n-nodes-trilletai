@@ -1,5 +1,6 @@
-import {
+import type {
 	IAuthenticateGeneric,
+    Icon,
 	ICredentialTestRequest,
 	ICredentialType,
 	INodeProperties,
@@ -7,7 +8,14 @@ import {
 
 export class TrilletApi implements ICredentialType {
 	name = 'trilletApi';
+
 	displayName = 'TrilletAI API';
+
+    icon: Icon = { light: 'file:../icons/trilletAI.svg', dark: 'file:../icons/trilletAI.dark.svg' };
+
+    documentationUrl =
+		'https://docs.trillet.ai/documentation/introduction';
+        
 	properties: INodeProperties[] = [
 		{
 			displayName: 'API Key',
