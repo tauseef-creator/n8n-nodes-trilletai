@@ -117,7 +117,7 @@ export class TrilletAi implements INodeType {
 								name: 'name',
 								type: 'string',
 								default: '',
-								placeholder: 'user_name',
+								placeholder: 'Var name',
 								description: 'Variable name',
 							},
 							{
@@ -125,7 +125,7 @@ export class TrilletAi implements INodeType {
 								name: 'value',
 								type: 'string',
 								default: '',
-								placeholder: 'ibraheem',
+								placeholder: 'Var value',
 								description: 'Variable value',
 							},
 						],
